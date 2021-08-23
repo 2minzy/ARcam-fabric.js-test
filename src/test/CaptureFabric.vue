@@ -66,7 +66,7 @@ export default {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
         const video = document.querySelector(".camera__video");
         console.log("navigator.mediaDevices", navigator.mediaDevices);
-        navigator.mediaDevices.getUserMedia({ video: { width: canvasW, height: canvasW, facingMode: { exact: data.userMode ? 'user' : 'environment' }} }).
+        navigator.mediaDevices.getUserMedia({ video: { width: canvasW, height: canvasW, facingMode: data.userMode ? 'user' : 'environment' } }).
         then(stream => {
           // 카메라 허용 클릭했을 때
           video.srcObject = stream;
