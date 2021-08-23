@@ -169,6 +169,7 @@ export default {
       },
       switchCam: () => {
         data.userMode = !data.userMode;
+        methods.playVideo();
       }
     }
 
