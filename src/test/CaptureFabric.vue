@@ -1,9 +1,8 @@
 <template>
   capture fabric
   <div class="camera">
-    <button class="camera__start" @click="methods.playVideo">camera__start</button>
     <div class="camera__video-wrap">
-      <video class="camera__video" autoplay></video>
+      <video class="camera__video" playsinline autoplay></video>
     </div>
     <div class="camera__canvas-wrap">
       <div class="camera__canvas-inr">
@@ -15,6 +14,7 @@
       </div>
     </div>
     <div class="camera__btn-wrap">
+      <button class="camera__btn" @click="methods.playVideo">camera__start</button>
       <button class="camera__btn" @click="methods.captureImage">captureImage</button>
       <button class="camera__btn" @click="methods.downloadImage">downloadImage</button>
       <button class="camera__btn" @click="methods.resetCanvas">resetCanvas</button>
@@ -59,13 +59,14 @@ export default {
       usedSvgInfo: [],
       stickers: computed(() => state.stickers),
       // stickers: state.stickers,
+      userMode: true
     })
     const methods = {
       playVideo: () => {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
         const video = document.querySelector(".camera__video");
         console.log("navigator.mediaDevices", navigator.mediaDevices);
-        navigator.mediaDevices.getUserMedia({ video: { width: canvasW, height: canvasW } }).
+        navigator.mediaDevices.getUserMedia({ video: { width: canvasW, height: canvasW, facingMode: { exact: data.userMode ? 'user' : 'environment' }} }).
         then(stream => {
           // 카메라 허용 클릭했을 때
           video.srcObject = stream;
@@ -102,7 +103,7 @@ export default {
         data.svgShape = [];
       },
       resetCanvas: () => {
-        const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
+        const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;  
         const imageCanvas = document.querySelector('.camera__canvas--image')
         const videoCanvas = document.querySelector('.camera__canvas--video')
         const fabricCanvas = document.querySelectorAll('.camera__canvas--fabric')
@@ -166,7 +167,9 @@ export default {
         console.log("objects", objects);
 
       },
-      switchCam: () => {}
+      switchCam: () => {
+        data.userMode = !data.userMode;
+      }
     }
 
     const setfabricControl = () => {
