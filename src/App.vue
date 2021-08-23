@@ -1,10 +1,35 @@
 <template>
   <div id="nav">
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
+    <!-- <router-link to="/">Home</router-link> | -->
+    <router-link to="/captureFabric">captureFabric</router-link> |
+    <router-link to="/captureFabricTest">captureFabricTest</router-link> |
+    <router-link to="/facingMode">facingMode</router-link>
   </div>
   <router-view/>
 </template>
+
+<script>
+import { reactive, useStore, onMounted } from "@/helper/vue.js";
+
+export default {
+  name: 'Home',
+  setup() {
+    const { state, commit, dispatch } = useStore();
+    const data = reactive({});
+
+    const methods = {};
+
+    onMounted(() => {
+      dispatch('init')
+    });
+
+    return {
+      data,
+			methods,
+    }
+  }
+}
+</script>
 
 <style lang="scss">
 #app {

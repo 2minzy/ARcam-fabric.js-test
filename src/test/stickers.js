@@ -1,0 +1,55 @@
+export default {
+  stickers: [
+    {
+      group: 'samsung',
+      item: [
+        {
+          id: '0-0',
+          path: require('@/assets/sticker-0-0.svg'),
+        },
+        {
+          id: '0-1',
+          path: require('@/assets/sticker-0-1.svg'),
+        },
+        {
+          id: '0-2',
+          path: require('@/assets/sticker-0-2.svg'),
+        },
+      ]
+    },
+    {
+      group: 'sdc',
+      item: [
+        {
+          id: '1-0',
+          path: require('@/assets/sticker-1-0.svg'),
+        },
+        {
+          id: '1-1',
+          path: require('@/assets/sticker-1-1.svg'),
+        },
+        {
+          id: '1-2',
+          path: require('@/assets/sticker-1-2.svg'),
+        },
+      ]
+    },
+    {
+      group: 'developer',
+      item: [
+        {
+          id: '2-0',
+          path: require('@/assets/sticker-2-0.svg'),
+        },
+        {
+          id: '2-1',
+          path: require('@/assets/sticker-2-1.svg'),
+        },
+        {
+          id: '2-2',
+          path: require('@/assets/sticker-2-2.svg'),
+        },
+      ]
+    },
+  ]
+}
