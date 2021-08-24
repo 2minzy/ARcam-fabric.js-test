@@ -3,7 +3,8 @@
     <!-- <router-link to="/">Home</router-link> | -->
     <router-link to="/captureFabric">captureFabric</router-link> |
     <router-link to="/captureFabricTest">captureFabricTest</router-link> |
-    <router-link to="/facingMode">facingMode</router-link>
+    <router-link to="/facingMode">facingMode</router-link> |
+    <router-link to="/landing">LandingPage</router-link>
   </div>
   <router-view/>
 </template>

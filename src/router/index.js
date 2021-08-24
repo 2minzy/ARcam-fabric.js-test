@@ -22,6 +22,11 @@ const routes = [
     name: 'facingMode',
     component: () => import('../test/FacingMode.vue')
   },
+  {
+    path: '/landing',
+    name: 'landing',
+    component: () => import('../test/LandingPage.vue')
+  }
   // {
   //   path: '/about',
   //   name: 'About',

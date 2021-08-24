@@ -19,9 +19,8 @@
       <button class="camera__btn" @click="methods.downloadImage">downloadImage</button>
       <button class="camera__btn" @click="methods.resetCanvas">resetCamera</button>
       <button class="camera__btn" @click="methods.removeSvg" :disabled="data.captureState">remove stickers</button>
-      <!-- <button class="camera__btn" @click="methods.sendUserInfo">sendUserInfo</button> -->
       <button class="camera__btn" @click="methods.switchCamera" :disabled="data.captureState">switchCamera</button>
-      <!-- <button class="camera__btn" @click="methods.getStickersInfo">getStickersInfo</button> -->
+      <button class="camera__btn" @click="methods.sendUserInfo">sendUserInfo</button>
     </div>
     <div class="camera__stickers-wrap">
       <div v-for="(stickerG, index) in data.stickers" :key="index" class="camera__group">
@@ -54,7 +53,7 @@ export default {
     const { state, commit, dispatch } = useStore();
     const data = reactive({
       fabricCanvas: computed(() => new fabric.Canvas('c')),
-      svgShape: [],
+      // svgShape: [],
       stickersInfo: [],
       facingMode: true,
       captureState: false,
@@ -70,7 +69,7 @@ export default {
         then(stream => {
           // 카메라 허용 클릭했을 때
           video.srcObject = stream;
-          // console.log("stream ----", stream);
+          console.log("stream ----", stream);
         }).catch(error => {
           console.error("Can not get an access to a camera...", error);
         });
@@ -79,37 +78,17 @@ export default {
         fabric.loadSVGFromURL(`${sticker.path}`, function(objects, options) {
           const shape = fabric.util.groupSVGElements(objects, options);
           shape['stickerId'] = sticker.id;
-          data.fabricCanvas.add(shape.scale(2));
-          data.fabricCanvas.setActiveObject(shape);
-          data.fabricCanvas.renderAll();
-          // console.log("shape", shape);
-
-
-          // const shapeIndex = data.svgShape.length;
-          // console.log("objects, options", objects, options);
-          // data.svgShape[shapeIndex] = {id: sticker.id, shape: fabric.util.groupSVGElements(objects, options)};
-          // // data.svgShape[shapeIndex] = fabric.util.groupSVGElements(objects, options);
-          // data.svgShape[shapeIndex].shape['stickerId'] = sticker.id;
-          // data.fabricCanvas.add(data.svgShape[shapeIndex].shape.scale(2));
-          // data.fabricCanvas.setActiveObject(data.svgShape[shapeIndex].shape);
+          
+          data.fabricCanvas.add(shape.scale(1)).setActiveObject(shape).renderAll();
+          // data.fabricCanvas.add(shape.scale(1));
+          // // data.fabricCanvas.add(shape.scale(2));
+          // data.fabricCanvas.setActiveObject(shape);
           // data.fabricCanvas.renderAll();
-          // // console.log("options", options);
-          // console.log("data.svgShape[shapeIndex].shape", data.svgShape[shapeIndex].shape);
-
-
-          // data.fabricCanvas.forEachObject(function(obj) {
-          //   var setCoords = obj.setCoords.bind(obj);
-          //   obj.on({
-          //     moving: setCoords,
-          //     scaling: setCoords,
-          //     rotating: setCoords
-          //   });
-          // })
         });
       },
       removeSvg: () => {
         data.fabricCanvas.remove(...data.fabricCanvas.getObjects());
-        data.svgShape = [];
+        // data.svgShape = [];
       },
       resetCanvas: () => {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
@@ -123,9 +102,6 @@ export default {
         videoContext.clearRect(0, 0, canvasW, canvasW);
         $.setCss({ display: 'inline-block' }, fabricCanvas[1]);
         data.captureState = false;
-      },
-      setUsedSvgInfo: () => {
-        
       },
       captureImage: () => {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
@@ -144,9 +120,23 @@ export default {
           videoContext.drawImage(video, 0, 0, canvasW, canvasW);
           $.setCss({ display: 'none' }, fabricCanvas[1]);
           data.captureState = true;
-
-          console.log("data.svgShape", data.svgShape);
+          setTimeout(() => {
+            methods.captureTest();
+          }, 20);
         }, 10);
+      },
+      captureTest: () => {
+        // console.log("captureTest ------------");
+        const videoCanvas = document.querySelector('.camera__canvas--video')
+        videoCanvas.toBlob(blob => {
+          const blobUrl = window.URL.createObjectURL(blob)
+          // console.log("blobUrl", data.fabricCanvas);
+          var img = new fabric.Image(blobUrl);
+          // img.scale(1).center().setCoords();
+          data.fabricCanvas.add(img).renderAll();
+        });
+        // console.log("getObjects", data.fabricCanvas.getObjects());
+        
       },
       downloadImage: () => {
         const imageCanvas = document.querySelector('.camera__canvas--image')
@@ -160,43 +150,37 @@ export default {
         });
       },
       sendUserInfo: () => {
-        getStickersInfo();
-        console.log("data.stickersInfo -------------", data.stickersInfo);
-        commit('setStickersInfo', {'stickersInfo': data.stickersInfo})
+        const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
+        const fabricStickers = data.fabricCanvas.getObjects();
+        const zoom = data.fabricCanvas.getZoom();
+        _.go(fabricStickers,
+          _.each(sticker => {
+            const info = {
+              id: sticker.stickerId,
+              width: (sticker.width * 100 * zoom)/canvasW,
+              height: (sticker.height * 100 * zoom)/canvasW,
+              left: (sticker.left * 100 * zoom)/canvasW,
+              top: (sticker.top * 100 * zoom)/canvasW,
+              scaleX: sticker.scaleX,
+              scaleY: sticker.scaleY,
+              angle: sticker.angle,
+            }
+            data.stickersInfo.push(info);
+          })
+        )
         const videoCanvas = document.querySelector('.camera__canvas--video')
         videoCanvas.toBlob(blob => {
           // commit
           // blob 그대로 사용 혹은 file 이용해서 store 저장, 서버로 전송
           // const file = new File([blob], "name");
         });
+      
+        commit('setStickersInfo', {'stickersInfo': data.stickersInfo})
       },
       switchCamera: () => {
         data.facingMode = !data.facingMode;
         methods.playVideo();
-        // const facingMode = navigator.mediaDevices.getSupportedConstraints().facingMode;
-        // // console.log("navigator.userAgent ", navigator.userAgent );
-        // console.log("test11", facingMode);
       },
-    }
-
-    const getStickersInfo = () => {
-      const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
-      const fabricStickers = data.fabricCanvas.getObjects();
-      _.go(fabricStickers,
-        _.each(sticker => {
-          const info = {
-            id: sticker.stickerId,
-            width: sticker.width*100/canvasW,
-            height: sticker.height*100/canvasW,
-            left: sticker.left*100/canvasW,
-            top: sticker.top*100/canvasW,
-            scaleX: sticker.scaleX,
-            scaleY: sticker.scaleY,
-            angle: sticker.angle,
-          }
-          data.stickersInfo.push(info);
-        })
-      )
     }
 
     const setfabricControl = () => {
@@ -224,10 +208,10 @@ export default {
       });
 
       function deleteObject(eventData, transform) {
-        console.log("transform", transform);
+        // console.log("transform", transform);
         const target = transform.target;
         const canvas = target.canvas;
-        console.log("canvas", canvas);
+        // console.log("canvas", canvas);
         canvas.remove(target);
         canvas.requestRenderAll();
       }
@@ -291,13 +275,13 @@ export default {
     }
 
     onMounted(() => {
-      // methods.playVideo(); // 테스트 중에만
+      methods.playVideo(); // 테스트 중에만
       setCanvasSize();
       setfabricControl();
       resizeTest();
       
-      // // console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom());
-      // window.addEventListener("resize", resizeTest);
+      // console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom());
+      window.addEventListener("resize", resizeTest);
     })
 
     return {

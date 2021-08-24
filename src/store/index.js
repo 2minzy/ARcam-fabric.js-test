@@ -5,10 +5,50 @@ import { createStore } from 'vuex'
 export const store = createStore({
   state: {
     stickers: [],
+    userInfo: {
+      userId: 0,
+      userImage: null,
+      stickers: [
+        {
+          id: '0-0',
+          width: null, 
+          height: null, 
+          left: null, 
+          top: null, 
+          scaleX: null, 
+          scaleY: null, 
+          angle: null,
+        },
+        {
+          id: '0-0',
+          width: null, 
+          height: null, 
+          left: null, 
+          top: null, 
+          scaleX: null, 
+          scaleY: null, 
+          angle: null,
+        },
+        {
+          id: '0-0',
+          width: null, 
+          height: null, 
+          left: null, 
+          top: null, 
+          scaleX: null, 
+          scaleY: null, 
+          angle: null,
+        },
+      ]
+    },
   },
   mutations: {
-    init(state, items) {
-      state.stickers = items.stickers;
+    init(state, payload) {
+      state.stickers = payload.stickers;
+    },
+    setStickersInfo(state, payload) {
+      state.userInfo.stickers = payload.stickersInfo;
+      console.log("state.userInfo------------", state.userInfo);
     },
   },
   actions: {
@@ -20,7 +60,5 @@ export const store = createStore({
     // getSelectedItem({ commit, rootState }, payload) {
     //   commit('getSelectedItem', {'dataName': payload.dataName, 'currId': payload.currId, 'contents': payload.contents, 'selectedItemIndex': payload.selectedItemIndex, 'lang': rootState.isLangKr ? 'KR' : 'ENG' });
     // },
-  },
-  modules: {
   }
 })
