@@ -1,12 +1,5 @@
 <template>
-    <!-- <p>{{ angle }} {{ height }}
-    {{id}}
-    {{left}}
-    {{scaleX }}
-    {{scaleY }}
-    {{top }}
-    {{width  }}</p> -->
-    <img ref="self" class="i-sticker" :src="'@/assets/sticker-' + id + '.svg'"  alt="" />
+  <img ref="self" class="i-sticker" :src="require(`@/assets/sticker-${id}.svg`)"  alt="" />
 </template>
 
 <script>
@@ -34,9 +27,6 @@ export default {
     })
 
     const methods = {
-      getSrc: () => {
-        data.src = `@/assets/sticker-${props.id}.svg`
-      }
     }
     
     onMounted(() => {
@@ -45,18 +35,14 @@ export default {
       // console.log(data.stacksList);
         // gsap.to(chatbotEl, 0.3, { x: 0 , y: 0, ease: 'power1' });
 
-        $.setCss({
-          transform: `scale(${props.scaleX}, ${props.scaleY})`,
-          top: `${props.top}%`,
-          left: `${props.left}%`,
-          // transformOrigin: '500px',
-          backgroundColor: 'red',
-          width: `${props.width}`
-          // transform: `scale(${props.scaleX}, ${props.scaleY})`,
-        }, self.value.parentElement)
-
-        methods.getSrc()
-        console.log(data.src)
+      $.setCss({
+        transform: `scale(${props.scaleX}, ${props.scaleY}) rotate(${props.angle}deg)`,
+        top: `${props.top}%`,
+        left: `${props.left}%`,
+        // transformOrigin: '500px',
+        width: `${props.width}`
+        // transform: `scale(${props.scaleX}, ${props.scaleY})`,
+      }, self.value.parentElement)
     })
 
     return {

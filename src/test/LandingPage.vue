@@ -52,8 +52,7 @@ export default {
     onMounted(async () => {
       // const res = await axios.get(`http://localhost:3000/stacks?_page=${data.loadCount}&_limit=12`)
       data.stacksList = StacksData
-      console.log(data.stacksList);
-
+      // console.log(data.stacksList);
     })
 
     return {
