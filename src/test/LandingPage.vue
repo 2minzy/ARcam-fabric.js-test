@@ -1,7 +1,8 @@
 <template>
   <div class="container stacks">
     <div class="stacks__title">Stack List</div>
-    <div class="stacks__items" >
+    <div class="stacks__wrapper">
+      <div class="stacks__items">
         <div class="stacks__item" v-for="(stack, idx) in data.stacksList" :key="idx">
           <div class="stacks__item-sticker" v-for="(info, idx) in stack.stackInfo" :key="idx">
             <DisplaySticker :id="info.id" :angle="info.angle" :height="info.height" :left="info.left" :scaleX="info.scaleX" 
@@ -11,6 +12,7 @@
             <img v-if="stack.imgSrc" :src="stack.imgSrc" alt="stack-image">
           </div>
         </div>
+      </div>
     </div>
     <button class="stacks__btn" @click="methods.loadMore">Load More</button>
   </div>
@@ -34,23 +36,23 @@ export default {
   setup() {
     const data = reactive({
       stacksList: null,
-      loadCount: 1,
+      pageCount: 1,
     })
 
     const methods = {
       loadMore: async () => {
-        // data.loadCount = data.loadCount + 1;
-        // const res = await axios.get(`http://localhost:3000/stacks?_page=${data.loadCount}&_limit=12`);
+        // data.pageCount = data.pageCount + 1;
+        // const res = await axios.get(`http://localhost:3000/stacks?_page=${data.pageCount}&_limit=12`);
         // const newData = res.data;
         // newData.map((i) => {
         //   data.stacksList.push(i)
         // })
-        // console.log(data.loadCount, data.stacksList, res.data);
+        // console.log(data.pageCount, data.stacksList, res.data);
       }
     } 
 
     onMounted(async () => {
-      // const res = await axios.get(`http://localhost:3000/stacks?_page=${data.loadCount}&_limit=12`)
+      // const res = await axios.get(`http://localhost:3000/stacks?_page=${data.pageCount}&_limit=12`)
       data.stacksList = StacksData
       // console.log(data.stacksList);
     })

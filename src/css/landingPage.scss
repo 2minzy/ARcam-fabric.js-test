@@ -4,33 +4,50 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
 
 .stacks {
   margin-top: 100px;
+  width: 100%;
   // padding: 60px;
 
   &__title {
     font-size: 1.6em;
   }
+
+  &__wrapper {
+    max-width: 1360px;
+    margin: 0 auto;
+  }
   
   &__items {
-    margin-top: 100px;
     display: flex;
+    justify-content: space-between;
     flex-wrap: wrap;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
+    margin-top: 100px;
   }
 
   &__item {
-    margin: 0 10px 20px;
+    margin-top: 20px;
     position: relative;
+    width: 48%;
+    // height: 100%;
     overflow: hidden;
+    &:nth-child(1), &:nth-child(2) {
+      margin-top: 0;
+    }
 
     &-bg {
+      width: 100%;
+      img {
+        width: 100%;
+      }
       // opacity: 0.4;
     }
 
     &-sticker {
       position: absolute;
       z-index: 10;
+      transform-origin: top left;
+      img {
+        width: 100%;
+      }
       // transform: scale(2) translate(100px,100px);
     }
   }

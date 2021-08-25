@@ -1,5 +1,4 @@
 <template>
-  capture fabric
   <div class="camera">
     <div class="camera__video-wrap">
       <video class="camera__video" playsinline autoplay></video>
@@ -21,10 +20,11 @@
       <button class="camera__btn" @click="methods.removeSvg" :disabled="data.captureState">remove stickers</button>
       <button class="camera__btn" @click="methods.switchCamera" :disabled="data.captureState">switchCamera</button>
       <button class="camera__btn" @click="methods.sendUserInfo">sendUserInfo</button>
+      <button class="camera__btn" @click="methods.addAnimation">addAnimation</button>
     </div>
     <div class="camera__stickers-wrap">
-      <div v-for="(stickerG, index) in data.stickers" :key="index" class="camera__group">
-        <div class="camera__group-name">{{ stickerG.group }}</div>
+      <div v-for="(stickerG, index) in data.stickers" :key="index" class="camera__group" :class="{'camera__group--active': index == 0}">
+        <button class="camera__group-name" @click="methods.activeStickerG">{{ stickerG.group }}</button>
         <div class="camera__group-stickers">
           <button v-for="(sticker, index) in stickerG.item" :key="index" @click="methods.addSvg(sticker)" :disabled="data.captureState" class="camera__stickers">
             <img :src="sticker.path" alt="">
@@ -32,9 +32,7 @@
         </div>
       </div>
     </div>
-
   </div>
-  
 </template>
 
 <script>
@@ -45,31 +43,27 @@ import { fabric } from 'fabric';
 import { computed } from '@vue/reactivity';
 // import { ref, reactive, onMounted, onBeforeUnmount, onUnmounted, computed, useStore, watch } from "@/helper/vue.js";
 
-// 1. 스티커 데이터 정리
-// 1. 스티커 -> 버튼 만들기
-
 export default {
   setup(props) {
     const { state, commit, dispatch } = useStore();
     const data = reactive({
       fabricCanvas: computed(() => new fabric.Canvas('c')),
-      // svgShape: [],
       stickersInfo: [],
+      userImage: null,
       facingMode: true,
       captureState: false,
+      deleteState: false,
       stickers: computed(() => state.stickers),
-      // stickers: state.stickers,
     })
     const methods = {
       playVideo: () => {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
         const video = document.querySelector(".camera__video");
-        // console.log("navigator.mediaDevices", navigator.mediaDevices);
         navigator.mediaDevices.getUserMedia({ video: { width: canvasW, height: canvasW, facingMode: data.facingMode ? 'user' : 'environment' } }).
         then(stream => {
           // 카메라 허용 클릭했을 때
           video.srcObject = stream;
-          console.log("stream ----", stream);
+          // console.log("stream ----", stream);
         }).catch(error => {
           console.error("Can not get an access to a camera...", error);
         });
@@ -78,17 +72,11 @@ export default {
         fabric.loadSVGFromURL(`${sticker.path}`, function(objects, options) {
           const shape = fabric.util.groupSVGElements(objects, options);
           shape['stickerId'] = sticker.id;
-          
           data.fabricCanvas.add(shape.scale(1)).setActiveObject(shape).renderAll();
-          // data.fabricCanvas.add(shape.scale(1));
-          // // data.fabricCanvas.add(shape.scale(2));
-          // data.fabricCanvas.setActiveObject(shape);
-          // data.fabricCanvas.renderAll();
         });
       },
       removeSvg: () => {
         data.fabricCanvas.remove(...data.fabricCanvas.getObjects());
-        // data.svgShape = [];
       },
       resetCanvas: () => {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
@@ -111,32 +99,27 @@ export default {
         const imageContext = imageCanvas.getContext("2d");
         const videoContext = videoCanvas.getContext("2d");
         const video = document.querySelector(".camera__video");
+        const zoom = data.fabricCanvas.getZoom();
         // 스티커 active해제
         data.fabricCanvas.discardActiveObject();
         data.fabricCanvas.requestRenderAll();
-        setTimeout(() => {
+        setTimeout(() => { // active해제 후 캡쳐 돼야 -> setTimeout
           imageContext.drawImage(video, 0, 0, canvasW, canvasW);
           imageContext.drawImage(fabricCanvas[0], 0, 0, canvasW, canvasW);
           videoContext.drawImage(video, 0, 0, canvasW, canvasW);
+          videoCanvas.toBlob(blob => {;
+            const blobUrl = window.URL.createObjectURL(blob)
+            fabric.Image.fromURL(blobUrl, function(img) {
+              data.fabricCanvas.add(img.scale(1/zoom).center().setCoords()).renderAll().sendToBack(img);
+            });
+            // // 서버로 전송 할 blob 이미지
+            // data.userImage = blob;
+            // blob 그대로 사용 혹은 file 이용해서 store 저장, 서버로 전송
+            // const file = new File([blob], "name")
+          });
           $.setCss({ display: 'none' }, fabricCanvas[1]);
           data.captureState = true;
-          setTimeout(() => {
-            methods.captureTest();
-          }, 20);
         }, 10);
-      },
-      captureTest: () => {
-        // console.log("captureTest ------------");
-        const videoCanvas = document.querySelector('.camera__canvas--video')
-        videoCanvas.toBlob(blob => {
-          const blobUrl = window.URL.createObjectURL(blob)
-          // console.log("blobUrl", data.fabricCanvas);
-          var img = new fabric.Image(blobUrl);
-          // img.scale(1).center().setCoords();
-          data.fabricCanvas.add(img).renderAll();
-        });
-        // console.log("getObjects", data.fabricCanvas.getObjects());
-        
       },
       downloadImage: () => {
         const imageCanvas = document.querySelector('.camera__canvas--image')
@@ -153,6 +136,7 @@ export default {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
         const fabricStickers = data.fabricCanvas.getObjects();
         const zoom = data.fabricCanvas.getZoom();
+        console.log("zoom", zoom)
         _.go(fabricStickers,
           _.each(sticker => {
             const info = {
@@ -165,25 +149,128 @@ export default {
               scaleY: sticker.scaleY,
               angle: sticker.angle,
             }
-            data.stickersInfo.push(info);
+            if (info.id !== undefined) {
+              data.stickersInfo.push(info);
+            }
           })
         )
-        const videoCanvas = document.querySelector('.camera__canvas--video')
-        videoCanvas.toBlob(blob => {
-          // commit
-          // blob 그대로 사용 혹은 file 이용해서 store 저장, 서버로 전송
-          // const file = new File([blob], "name");
-        });
       
-        commit('setStickersInfo', {'stickersInfo': data.stickersInfo})
+        commit('setStickersInfo', {'stickersInfo': data.stickersInfo, 'userImage': data.userImage})
       },
       switchCamera: () => {
         data.facingMode = !data.facingMode;
         methods.playVideo();
       },
+      addAnimation: () => {
+        fabric.Sprite = fabric.util.createClass(fabric.Image, {
+          type: 'sprite',
+          spriteWidth: 50,
+          spriteHeight: 72,
+          spriteIndex: 0,
+          frameTime: 100,
+
+          initialize: function(element, options) {
+            options || (options = { });
+
+            options.width = this.spriteWidth;
+            options.height = this.spriteHeight;
+
+            this.callSuper('initialize', element, options);
+
+            this.createTmpCanvas();
+            this.createSpriteImages();
+          },
+
+          createTmpCanvas: function() {
+            this.tmpCanvasEl = fabric.util.createCanvasElement();
+            this.tmpCanvasEl.width = this.spriteWidth || this.width;
+            this.tmpCanvasEl.height = this.spriteHeight || this.height;
+          },
+
+          createSpriteImages: function() {
+            this.spriteImages = [ ];
+
+            var steps = this._element.width / this.spriteWidth;
+            for (var i = 0; i < steps; i++) {
+              this.createSpriteImage(i);
+            }
+          },
+
+          createSpriteImage: function(i) {
+            var tmpCtx = this.tmpCanvasEl.getContext('2d');
+            tmpCtx.clearRect(0, 0, this.tmpCanvasEl.width, this.tmpCanvasEl.height);
+            tmpCtx.drawImage(this._element, -i * this.spriteWidth, 0);
+
+            var dataURL = this.tmpCanvasEl.toDataURL('image/png');
+            var tmpImg = fabric.util.createImage();
+
+            tmpImg.src = dataURL;
+
+            this.spriteImages.push(tmpImg);
+          },
+
+          _render: function(ctx) {
+            ctx.drawImage(
+              this.spriteImages[this.spriteIndex],
+              -this.width / 2,
+              -this.height / 2
+            );
+          },
+
+          play: function() {
+            var _this = this;
+            this.animInterval = setInterval(function() {
+
+              _this.onPlay && _this.onPlay();
+              _this.dirty = true;
+              _this.spriteIndex++;
+              if (_this.spriteIndex === _this.spriteImages.length) {
+                _this.spriteIndex = 0;
+              }
+            }, this.frameTime);
+          },
+
+          stop: function() {
+            clearInterval(this.animInterval);
+          }
+        });
+
+        fabric.Sprite.fromURL = function(url, callback, imgOptions) {
+          fabric.util.loadImage(url, function(img) {
+            callback(new fabric.Sprite(img, imgOptions));
+          });
+        };
+
+        fabric.Sprite.async = true;
+
+        //////////////////////////////////////////////////////////////
+
+        fabric.Sprite.fromURL(require('@/assets/sprite.png'), function(sprite) {
+          data.fabricCanvas.add(sprite);
+            sprite.set('dirty', true);
+            sprite.play();
+        });
+
+        (function render() {
+          data.fabricCanvas.renderAll();
+          fabric.util.requestAnimFrame(render);
+        })();
+
+
+      },
+      activeStickerG: (e) => {
+        _.go(
+          $.qsa(".camera__group"),
+          _.each(item => {
+            if ($.hasClass("camera__group--active", item)) $.removeClass("camera__group--active", item)
+          })
+        )
+        $.addClass("camera__group--active", $.closest(".camera__group", e.target));
+      },
     }
 
     const setfabricControl = () => {
+      // 스티커 컨드롤
       const fabricObject = fabric.Object.prototype;
       const img = document.createElement('img');
       // const deleteIcon = "data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'%3E%3Csvg version='1.1' id='Ebene_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='595.275px' height='595.275px' viewBox='200 215 230 470' xml:space='preserve'%3E%3Ccircle style='fill:%23F44336;' cx='299.76' cy='439.067' r='218.516'/%3E%3Cg%3E%3Crect x='267.162' y='307.978' transform='matrix(0.7071 -0.7071 0.7071 0.7071 -222.6202 340.6915)' style='fill:white;' width='65.545' height='262.18'/%3E%3Crect x='266.988' y='308.153' transform='matrix(0.7071 0.7071 -0.7071 0.7071 398.3889 -83.3116)' style='fill:white;' width='65.544' height='262.179'/%3E%3C/g%3E%3C/svg%3E";
@@ -208,10 +295,11 @@ export default {
       });
 
       function deleteObject(eventData, transform) {
-        // console.log("transform", transform);
+        data.deleteState = true;
+        console.log("transform", transform);
         const target = transform.target;
         const canvas = target.canvas;
-        // console.log("canvas", canvas);
+        console.log("canvas", canvas);
         canvas.remove(target);
         canvas.requestRenderAll();
       }
@@ -228,16 +316,7 @@ export default {
       }
     }
 
-    const setCanvasSize = () => { // resize
-      // const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
-      // const imageCanvas = document.querySelector('.camera__canvas--image') // 사용자 device에 저장
-      // const videoCanvas = document.querySelector('.camera__canvas--video') // 사용자 비디오 캡쳐
-      // data.fabricCanvas.setDimensions({width:canvasW, height:canvasW});
-      // imageCanvas.setAttribute("width", canvasW);
-      // imageCanvas.setAttribute("height", canvasW);
-      // videoCanvas.setAttribute("width", canvasW);
-      // videoCanvas.setAttribute("height", canvasW);
-
+    const setCanvasSize = () => {
       const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
       const imageCanvas = document.querySelector('.camera__canvas--image') // 사용자 device에 저장
       const videoCanvas = document.querySelector('.camera__canvas--video') // 사용자 비디오 캡쳐
@@ -246,42 +325,32 @@ export default {
       imageCanvas.setAttribute("height", canvasW);
       videoCanvas.setAttribute("width", canvasW);
       videoCanvas.setAttribute("height", canvasW);
-
-      // 캡쳐 후 resize하고 다운로드하면 이상함
-      // resize 하면 캔버스 비워짐
+      resizeCallback();
     }
-    const resizeTest = () => { // resize
-      // const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
-      // const imageCanvas = document.querySelector('.camera__canvas--image') // 사용자 device에 저장
-      // const videoCanvas = document.querySelector('.camera__canvas--video') // 사용자 비디오 캡쳐
-      // data.fabricCanvas.setDimensions({width:canvasW, height:canvasW});
-      // imageCanvas.setAttribute("width", canvasW);
-      // imageCanvas.setAttribute("height", canvasW);
-      // videoCanvas.setAttribute("width", canvasW);
-      // videoCanvas.setAttribute("height", canvasW);
-
-      // console.log("data.fabricCanvas.getZoom() ------", data.fabricCanvas.getZoom());
+    const resizeCallback = () => { // resize
+      methods.playVideo();
+      console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom())
       const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
-      const videoCanvas = document.querySelector('.camera__canvas--video') // 사용자 비디오 캡쳐
-
-      
       const scale = canvasW / data.fabricCanvas.getWidth();
       const zoom  = data.fabricCanvas.getZoom() * scale;
       data.fabricCanvas.setDimensions({width: canvasW, height: canvasW});
       data.fabricCanvas.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
-      // videoCanvas.setAttribute("width", canvasW);
-      // videoCanvas.setAttribute("height", canvasW);
-
+    }
+    const setZindex = () => {
+      data.fabricCanvas.on('mouse:up', function(e) {
+        if (!e.target) return;
+        if (data.deleteState) return data.deleteState = false;
+        data.fabricCanvas.bringToFront(e.target);
+      })
     }
 
     onMounted(() => {
       methods.playVideo(); // 테스트 중에만
+      setZindex();
       setCanvasSize();
       setfabricControl();
-      resizeTest();
       
-      // console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom());
-      window.addEventListener("resize", resizeTest);
+      window.addEventListener("resize", resizeCallback);
     })
 
     return {

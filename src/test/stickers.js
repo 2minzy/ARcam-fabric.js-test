@@ -15,6 +15,30 @@ export default {
           id: '0-2',
           path: require('@/assets/sticker-0-2.svg'),
         },
+        // {
+        //   id: '0-3',
+        //   path: require('@/assets/sticker-0-3.svg'),
+        // },
+        {
+          id: '0-4',
+          path: require('@/assets/sticker-0-4.svg'),
+        },
+        {
+          id: '0-5',
+          path: require('@/assets/sticker-0-5.svg'),
+        },
+        {
+          id: '0-6',
+          path: require('@/assets/sticker-0-6.svg'),
+        },
+        {
+          id: '0-7',
+          path: require('@/assets/sticker-0-7.svg'),
+        },
+        {
+          id: '0-8',
+          path: require('@/assets/sticker-0-8.svg'),
+        },
       ]
     },
     {

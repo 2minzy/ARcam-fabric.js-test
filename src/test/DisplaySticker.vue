@@ -39,8 +39,8 @@ export default {
         transform: `scale(${props.scaleX}, ${props.scaleY}) rotate(${props.angle}deg)`,
         top: `${props.top}%`,
         left: `${props.left}%`,
-        // transformOrigin: '500px',
-        width: `${props.width}`
+        width: `${props.width}%`,
+        height: `${props.height}%`
         // transform: `scale(${props.scaleX}, ${props.scaleY})`,
       }, self.value.parentElement)
     })
