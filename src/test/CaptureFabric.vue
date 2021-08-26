@@ -18,7 +18,7 @@
       <button class="camera__btn" @click="methods.downloadImage">downloadImage</button>
       <button class="camera__btn" @click="methods.resetCanvas">resetCamera</button>
       <button class="camera__btn" @click="methods.removeSvg" :disabled="data.captureState">remove stickers</button>
-      <button class="camera__btn" @click="methods.switchCamera" :disabled="data.captureState">switchCamera</button>
+      <button class="camera__btn" @click="methods.switchCamera" :disabled="data.captureState" :class="{'camera__btn--hide': data.cameraLength == 1}">switchCamera</button>
       <button class="camera__btn" @click="methods.sendUserInfo">sendUserInfo</button>
       <button class="camera__btn" @click="methods.addAnimation">addAnimation</button>
     </div>
@@ -38,7 +38,7 @@
 <script>
 import * as $ from "fxdom";
 import * as _ from "fxjs";
-import { reactive, useStore, onMounted } from "@/helper/vue.js";
+import { reactive, useStore, onMounted, onUnmounted } from "@/helper/vue.js";
 import { fabric } from 'fabric';
 import { computed } from '@vue/reactivity';
 // import { ref, reactive, onMounted, onBeforeUnmount, onUnmounted, computed, useStore, watch } from "@/helper/vue.js";
@@ -53,6 +53,7 @@ export default {
       facingMode: true,
       captureState: false,
       deleteState: false,
+      cameraLength: null,
       stickers: computed(() => state.stickers),
     })
     const methods = {
@@ -133,10 +134,10 @@ export default {
         });
       },
       sendUserInfo: () => {
+        console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom());
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
         const fabricStickers = data.fabricCanvas.getObjects();
         const zoom = data.fabricCanvas.getZoom();
-        console.log("zoom", zoom)
         _.go(fabricStickers,
           _.each(sticker => {
             const info = {
@@ -269,6 +270,24 @@ export default {
       },
     }
 
+    const checkCamera = () => {
+      navigator.mediaDevices.enumerateDevices().then(deviceInfos => {
+        let video = [];
+        _.go(deviceInfos,
+          _.each(info => {
+            if (info.kind === 'videoinput') {
+              video.push(info)
+            }
+          })
+        )
+        data.cameraLength = video.length;
+        console.log("info", video.length);
+
+      }).catch(error => {
+        console.log("error");
+      });
+    }
+
     const setfabricControl = () => {
       // 스티커 컨드롤
       const fabricObject = fabric.Object.prototype;
@@ -278,11 +297,13 @@ export default {
       img.src = deleteIcon;
 
       fabricObject.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
-      // console.log("fabricObject.controls", fabricObject.controls);
 
       fabricObject.transparentCorners = false;
-      fabricObject.cornerColor = 'blue';
-      fabricObject.cornerStyle = 'circle';
+      // fabricObject.borderColor = 'black';
+      // fabricObject.cornerColor = 'blue';
+      // fabricObject.cornerStrokeColor = 'red';
+      // fabricObject.cornerStyle = 'circle';
+      // fabricObject.cornerStyle = 'square';
 
       fabricObject.controls.deleteControl = new fabric.Control({
         x: 0.5,
@@ -293,13 +314,15 @@ export default {
         render: renderIcon,
         cornerSize: 24
       });
+      console.log("fabricObject.controls", fabricObject);
+      console.log("fabricObject.controls", fabricObject.controls);
+      console.log("img", img);
 
       function deleteObject(eventData, transform) {
         data.deleteState = true;
-        console.log("transform", transform);
+        // console.log("transform", transform);
         const target = transform.target;
         const canvas = target.canvas;
-        console.log("canvas", canvas);
         canvas.remove(target);
         canvas.requestRenderAll();
       }
@@ -329,7 +352,7 @@ export default {
     }
     const resizeCallback = () => { // resize
       methods.playVideo();
-      console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom())
+      console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom());
       const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
       const scale = canvasW / data.fabricCanvas.getWidth();
       const zoom  = data.fabricCanvas.getZoom() * scale;
@@ -344,13 +367,50 @@ export default {
       })
     }
 
+      // function gotDevices(deviceInfos) {
+      //   // Handles being called several times to update labels. Preserve values.
+      //   const values = selectors.map(select => select.value);
+      //   selectors.forEach(select => {
+      //     while (select.firstChild) {
+      //       select.removeChild(select.firstChild);
+      //     }
+      //   });
+      //   for (let i = 0; i !== deviceInfos.length; ++i) {
+      //     const deviceInfo = deviceInfos[i];
+      //     const option = document.createElement('option');
+      //     option.value = deviceInfo.deviceId;
+      //     if (deviceInfo.kind === 'audioinput') {
+      //       option.text = deviceInfo.label || `microphone ${audioInputSelect.length + 1}`;
+      //       audioInputSelect.appendChild(option);
+      //     } else if (deviceInfo.kind === 'audiooutput') {
+      //       option.text = deviceInfo.label || `speaker ${audioOutputSelect.length + 1}`;
+      //       audioOutputSelect.appendChild(option);
+      //     } else if (deviceInfo.kind === 'videoinput') {
+      //       option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
+      //       videoSelect.appendChild(option);
+      //     } else {
+      //       console.log('Some other kind of source/device: ', deviceInfo);
+      //     }
+      //   }
+      //   selectors.forEach((select, selectorIndex) => {
+      //     if (Array.prototype.slice.call(select.childNodes).some(n => n.value === values[selectorIndex])) {
+      //       select.value = values[selectorIndex];
+      //     }
+      //   });
+      // }
+
     onMounted(() => {
+      checkCamera();
       methods.playVideo(); // 테스트 중에만
       setZindex();
       setCanvasSize();
       setfabricControl();
       
       window.addEventListener("resize", resizeCallback);
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener("resize", resizeCallback);
     })
 
     return {

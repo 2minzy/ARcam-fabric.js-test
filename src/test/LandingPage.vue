@@ -5,8 +5,8 @@
       <div class="stacks__items">
         <div class="stacks__item" v-for="(stack, idx) in data.stacksList" :key="idx">
           <div class="stacks__item-sticker" v-for="(info, idx) in stack.stackInfo" :key="idx">
-            <DisplaySticker :id="info.id" :angle="info.angle" :height="info.height" :left="info.left" :scaleX="info.scaleX" 
-            :scaleY="info.scaleY" :top="info.top" :width="info.width"></DisplaySticker>
+              <DisplaySticker :id="info.id" :angle="info.angle" :height="info.height" :left="info.left" :scaleX="info.scaleX"
+              :scaleY="info.scaleY" :top="info.top" :width="info.width"></DisplaySticker>
           </div>
           <div class="stacks__item-bg">
             <img v-if="stack.imgSrc" :src="stack.imgSrc" alt="stack-image">
