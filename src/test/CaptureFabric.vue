@@ -282,12 +282,12 @@ export default {
             }
           })
         )
-        console.log("video", videoj);
+        console.log("video", video);
         data.cameraLength = video.length;
         console.log("info", video.length);
 
       }).catch(error => {
-        console.log("error");
+        console.log("error", error);
       });
     }
 
