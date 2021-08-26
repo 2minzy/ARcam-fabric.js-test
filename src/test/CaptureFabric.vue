@@ -273,13 +273,16 @@ export default {
     const checkCamera = () => {
       navigator.mediaDevices.enumerateDevices().then(deviceInfos => {
         let video = [];
+        console.log('deviceInfos', deviceInfos);
         _.go(deviceInfos,
           _.each(info => {
             if (info.kind === 'videoinput') {
+              console.log("info", info);
               video.push(info)
             }
           })
         )
+        console.log("video", videoj);
         data.cameraLength = video.length;
         console.log("info", video.length);
 
