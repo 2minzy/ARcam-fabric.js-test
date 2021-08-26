@@ -56,6 +56,27 @@ export default {
       cameraLength: null,
       stickers: computed(() => state.stickers),
     })
+
+    const checkCamera = () => {
+      navigator.mediaDevices.enumerateDevices().then(function(deviceInfos) {
+        let video = [];
+        console.log('deviceInfos', deviceInfos);
+        _.go(deviceInfos,
+          _.each(info => {
+            if (info.kind === 'videoinput') {
+              console.log("info", info);
+              video.push(info)
+            }
+          })
+        )
+        console.log("video", video);
+        data.cameraLength = video.length;
+        console.log("info", video.length);
+      }).catch(error => {
+        console.log("error", error);
+      });
+    }
+
     const methods = {
       playVideo: () => {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
@@ -64,6 +85,7 @@ export default {
         then(stream => {
           // 카메라 허용 클릭했을 때
           video.srcObject = stream;
+          checkCamera();
           // console.log("stream ----", stream);
         }).catch(error => {
           console.error("Can not get an access to a camera...", error);
@@ -270,26 +292,6 @@ export default {
       },
     }
 
-    const checkCamera = () => {
-      navigator.mediaDevices.enumerateDevices().then(function(deviceInfos) {
-        let video = [];
-        console.log('deviceInfos', deviceInfos);
-        _.go(deviceInfos,
-          _.each(info => {
-            if (info.kind === 'videoinput') {
-              console.log("info", info);
-              video.push(info)
-            }
-          })
-        )
-        console.log("video", video);
-        data.cameraLength = video.length;
-        console.log("info", video.length);
-      }).catch(error => {
-        console.log("error", error);
-      });
-    }
-
     const setfabricControl = () => {
       // 스티커 컨드롤
       const fabricObject = fabric.Object.prototype;
@@ -400,7 +402,6 @@ export default {
       //     }
       //   });
       // }
-      checkCamera();
 
     onMounted(() => {
       methods.playVideo(); // 테스트 중에만
