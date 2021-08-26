@@ -400,9 +400,9 @@ export default {
       //     }
       //   });
       // }
+      checkCamera();
 
     onMounted(() => {
-      checkCamera();
       methods.playVideo(); // 테스트 중에만
       setZindex();
       setCanvasSize();
