@@ -270,9 +270,8 @@ export default {
       },
     }
 
-    const checkCamera = async () => {
-      try {
-        const deviceInfos = await navigator.mediaDevices.enumerateDevices();
+    const checkCamera = () => {
+      navigator.mediaDevices.enumerateDevices().then(function(deviceInfos) {
         let video = [];
         console.log('deviceInfos', deviceInfos);
         _.go(deviceInfos,
@@ -286,27 +285,9 @@ export default {
         console.log("video", video);
         data.cameraLength = video.length;
         console.log("info", video.length);
-      } catch {
+      }).catch(error => {
         console.log("error", error);
-      }
-      // navigator.mediaDevices.enumerateDevices().then(function(deviceInfos) {
-      //   let video = [];
-      //   console.log('deviceInfos', deviceInfos);
-      //   _.go(deviceInfos,
-      //     _.each(info => {
-      //       if (info.kind === 'videoinput') {
-      //         console.log("info", info);
-      //         video.push(info)
-      //       }
-      //     })
-      //   )
-      //   console.log("video", video);
-      //   data.cameraLength = video.length;
-      //   console.log("info", video.length);
-
-      // }).catch(error => {
-      //   console.log("error", error);
-      // });
+      });
     }
 
     const setfabricControl = () => {
@@ -420,8 +401,8 @@ export default {
       //   });
       // }
 
-    onMounted(async () => {
-      await checkCamera();
+    onMounted(() => {
+      checkCamera();
       methods.playVideo(); // 테스트 중에만
       setZindex();
       setCanvasSize();

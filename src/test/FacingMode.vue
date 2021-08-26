@@ -46,6 +46,7 @@ export default {
       audioOutputSelect.disabled = !('sinkId' in HTMLMediaElement.prototype);
 
       function gotDevices(deviceInfos) {
+        console.log('🚀🚀🚀 device info', deviceInfos);
         // Handles being called several times to update labels. Preserve values.
         const values = selectors.map(select => select.value);
         selectors.forEach(select => {
