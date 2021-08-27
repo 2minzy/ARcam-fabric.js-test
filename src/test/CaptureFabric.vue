@@ -130,7 +130,7 @@ export default {
           imageContext.drawImage(video, 0, 0, canvasW, canvasW);
           imageContext.drawImage(fabricCanvas[0], 0, 0, canvasW, canvasW);
           videoContext.drawImage(video, 0, 0, canvasW, canvasW);
-          videoCanvas.toBlob(blob => {;
+          videoCanvas.toBlob(blob => {
             const blobUrl = window.URL.createObjectURL(blob)
             fabric.Image.fromURL(blobUrl, function(img) {
               data.fabricCanvas.add(img.scale(1/zoom).center().setCoords()).renderAll().sendToBack(img);
@@ -143,6 +143,8 @@ export default {
           $.setCss({ display: 'none' }, fabricCanvas[1]);
           data.captureState = true;
         }, 10);
+
+        commit('setCanvas', {'canvas': data.fabricCanvas})
       },
       downloadImage: () => {
         const imageCanvas = document.querySelector('.camera__canvas--image')

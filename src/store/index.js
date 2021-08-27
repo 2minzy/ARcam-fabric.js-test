@@ -41,6 +41,10 @@ export const store = createStore({
         },
       ]
     },
+    inputInfo: {
+      name: '',
+      message: ''
+    }
   },
   mutations: {
     init(state, payload) {
@@ -50,6 +54,12 @@ export const store = createStore({
       state.userInfo.stickers = payload.stickersInfo;
       console.log("state.userInfo------------", state.userInfo);
     },
+    updateName(state, val) {
+      state.inputInfo.name = val;
+    },
+    updateMessage(state, val) {
+      state.inputInfo.message = val;
+    }
   },
   actions: {
     async init({ commit }, payload) {

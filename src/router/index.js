@@ -26,6 +26,11 @@ const routes = [
     path: '/landing',
     name: 'landing',
     component: () => import('../test/LandingPage.vue')
+  }, 
+  {
+    path: '/edit',
+    name: 'edit',
+    component: () => import('../test/EditPage.vue')
   }
   // {
   //   path: '/about',

@@ -4,7 +4,8 @@
     <router-link to="/captureFabric">captureFabric</router-link> |
     <router-link to="/captureFabricTest">captureFabricTest</router-link> |
     <router-link to="/facingMode">facingMode</router-link> |
-    <router-link to="/landing">LandingPage</router-link>
+    <router-link to="/landing">LandingPage</router-link> | 
+    <router-link to="/edit">EditPage</router-link>
   </div>
   <router-view/>
 </template>

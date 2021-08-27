@@ -24,7 +24,8 @@ module.exports = {
 			"captureFabric",
 			"captureFabricTest",
       "facingMode",
-      "landing"
+      "landing",
+      "edit"
 		])
   },
 }
