@@ -52,6 +52,17 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
   &__ip {
     text-align: start;
 
+    &-title {
+      font-weight: 400;
+    }
+
+    &__btn {
+      padding: 0.8em 4em;
+      border: 2px solid rgb(182, 178, 178);
+      border-radius: 20em;
+      cursor: pointer;
+    }
+
     &-box {
       margin-top: 6em;
 
@@ -60,24 +71,28 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
         display: flex;
         justify-content: space-around;
       }
-    }
+      
+      input[type='text'] {
+        margin-top: 1.2em;
+        width: 500px;
+        height: 40px;
+        border: 1px solid #ccc
+      }
+  
+      input[type='checkbox'] {
+        display: inline;
+        margin-top: 1.2em;
+      }
 
-    &-title {
-      font-weight: 400;
-    }
+      &--validation {
+        input[type='text'] {
+          border: 1px solid #c00;
+        }
 
-    input {
-      margin-top: 1.2em;
-      width: 500px;
-      height: 40px;
-      border: 1px solid #ccc
-    }
-
-    &__btn {
-      padding: 0.8em 4em;
-      border: 2px solid rgb(182, 178, 178);
-      border-radius: 20em;
-      cursor: pointer;
+        input[type='checkbox'] {
+          outline: 1px solid #c00;
+        }
+      }
     }
   }
 } 

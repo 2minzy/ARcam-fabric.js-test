@@ -43,6 +43,7 @@ export const store = createStore({
     },
     inputInfo: {
       name: '',
+      type: [],
       message: ''
     }
   },
@@ -59,6 +60,11 @@ export const store = createStore({
     },
     updateMessage(state, val) {
       state.inputInfo.message = val;
+    },
+    updateType(state, val) {
+      console.log(val)
+      state.inputInfo.type = [];
+      state.inputInfo.type = val;
     }
   },
   actions: {
