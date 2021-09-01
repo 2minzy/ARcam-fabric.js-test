@@ -15,8 +15,8 @@ import { onMounted, reactive } from 'vue'
 import * as $ from "fxdom";
 import * as _ from "fxjs";
 import axios from 'axios';
-import StacksData from '../store/data-stacks';
-import StackItem from '@/test/StackItem.vue'
+import StacksData from '@/store/data-stacks.js';
+import StackItem from '@/components/StackItem.vue'
 
 export default {
   name: 'StackList',

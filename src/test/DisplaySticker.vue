@@ -1,5 +1,5 @@
 <template>
-  <img ref="self" class="i-sticker" :src="require(`@/assets/sticker-${id}.svg`)"  alt="" />
+  <img ref="self" class="i-sticker" :src="require(`@/assets/stickers/sticker-${id}.svg`)"  alt="" />
 </template>
 
 <script>

@@ -61,7 +61,7 @@ export default {
       },
       addSvg: () => {
         console.log("addSvg ---------------");
-        fabric.loadSVGFromURL(require('@/assets/sticker-0-1.svg'), function(objects, options) {
+        fabric.loadSVGFromURL(require('@/assets/stickers/sticker-0-1.svg'), function(objects, options) {
           var shape = fabric.util.groupSVGElements(objects, options);
           data.fabricCanvas.add(shape.scale(1));
           // svg 초기 위치 설정

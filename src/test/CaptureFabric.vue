@@ -16,18 +16,23 @@
       <button class="camera__btn" @click="methods.playVideo" :disabled="data.captureState">camera__start</button>
       <button class="camera__btn" @click="methods.captureImage">captureImage</button>
       <button class="camera__btn" @click="methods.downloadImage">downloadImage</button>
-      <button class="camera__btn" @click="methods.resetCanvas">resetCamera</button>
+      <button class="camera__btn" @click="methods.resetCanvas" :disabled="!data.captureState">resetCamera</button>
       <button class="camera__btn" @click="methods.removeSvg" :disabled="data.captureState">remove stickers</button>
       <button class="camera__btn" @click="methods.switchCamera" :disabled="data.captureState" :class="{'camera__btn--hide': data.cameraLength == 1}">switchCamera</button>
       <button class="camera__btn" @click="methods.sendUserInfo">sendUserInfo</button>
-      <button class="camera__btn" @click="methods.addAnimation">addAnimation</button>
+      <!-- <button class="camera__btn" @click="methods.sendUserInfo" :disabled="!data.captureState">sendUserInfo</button> -->
     </div>
     <div class="camera__stickers-wrap">
       <div v-for="(stickerG, index) in data.stickers" :key="index" class="camera__group" :class="{'camera__group--active': index == 0}">
         <button class="camera__group-name" @click="methods.activeStickerG">{{ stickerG.group }}</button>
         <div class="camera__group-stickers">
-          <button v-for="(sticker, index) in stickerG.item" :key="index" @click="methods.addSvg(sticker)" :disabled="data.captureState" class="camera__stickers">
-            <img :src="sticker.path" alt="">
+          <button v-for="(sticker, index) in stickerG.item" :key="index" @click="methods.addSvg(sticker)" :disabled="data.captureState" class="camera__stickers" :class="{'camera__stickers--animate': sticker.isAnimate}">
+            <template v-if="!sticker.isAnimate">
+              <img :src="require(`@/assets/stickers/sticker-${sticker.id}.svg`)" alt="">
+            </template>
+            <template v-else>
+              <AnimateSvg :id="sticker.id"></AnimateSvg>
+            </template>
           </button>
         </div>
       </div>
@@ -42,8 +47,12 @@ import { reactive, useStore, onMounted, onUnmounted } from "@/helper/vue.js";
 import { fabric } from 'fabric';
 import { computed } from '@vue/reactivity';
 // import { ref, reactive, onMounted, onBeforeUnmount, onUnmounted, computed, useStore, watch } from "@/helper/vue.js";
+import AnimateSvg from '@/components/AnimateSvg.vue'
 
 export default {
+  components: {
+    AnimateSvg,
+  },
   setup(props) {
     const { state, commit, dispatch } = useStore();
     const data = reactive({
@@ -52,39 +61,20 @@ export default {
       userImage: null,
       facingMode: true,
       captureState: false,
+      videoState: false,
       deleteState: false,
       cameraLength: null,
       stickers: computed(() => state.stickers),
     })
-
-    const checkCamera = () => {
-      navigator.mediaDevices.enumerateDevices().then(function(deviceInfos) {
-        let video = [];
-        console.log('deviceInfos', deviceInfos);
-        _.go(deviceInfos,
-          _.each(info => {
-            if (info.kind === 'videoinput') {
-              console.log("info", info);
-              video.push(info)
-            }
-          })
-        )
-        console.log("video", video);
-        data.cameraLength = video.length;
-        console.log("info", video.length);
-      }).catch(error => {
-        console.log("error", error);
-      });
-    }
-
     const methods = {
-      playVideo: () => {
+      playVideo: () => {  
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
         const video = document.querySelector(".camera__video");
         navigator.mediaDevices.getUserMedia({ video: { width: canvasW, height: canvasW, facingMode: data.facingMode ? 'user' : 'environment' } }).
         then(stream => {
           // 카메라 허용 클릭했을 때
           video.srcObject = stream;
+          data.videoState = true;
           checkCamera();
           // console.log("stream ----", stream);
         }).catch(error => {
@@ -92,14 +82,20 @@ export default {
         });
       },
       addSvg: (sticker) => {
-        fabric.loadSVGFromURL(`${sticker.path}`, function(objects, options) {
-          const shape = fabric.util.groupSVGElements(objects, options);
-          shape['stickerId'] = sticker.id;
-          data.fabricCanvas.add(shape.scale(1)).setActiveObject(shape).renderAll();
-        });
+        if (sticker.isAnimate) {
+          addAnimation(sticker.id, sticker.isAnimate);
+        } else {
+          fabric.loadSVGFromURL(require(`@/assets/stickers/sticker-${sticker.id}.svg`), function(objects, options) {
+            const shape = fabric.util.groupSVGElements(objects, options);
+            shape['stickerId'] = sticker.id;
+            shape['isAnimate'] = false;
+            data.fabricCanvas.add(shape.scale(1)).setActiveObject(shape).renderAll();
+          });
+        }
       },
       removeSvg: () => {
         data.fabricCanvas.remove(...data.fabricCanvas.getObjects());
+        data.stickersInfo = [];
       },
       resetCanvas: () => {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
@@ -116,6 +112,7 @@ export default {
       },
       captureImage: () => {
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
+        console.log('canvasW', canvasW)
         const imageCanvas = document.querySelector('.camera__canvas--image')
         const videoCanvas = document.querySelector('.camera__canvas--video')
         const fabricCanvas = document.querySelectorAll('.camera__canvas--fabric')
@@ -123,6 +120,7 @@ export default {
         const videoContext = videoCanvas.getContext("2d");
         const video = document.querySelector(".camera__video");
         const zoom = data.fabricCanvas.getZoom();
+
         // 스티커 active해제
         data.fabricCanvas.discardActiveObject();
         data.fabricCanvas.requestRenderAll();
@@ -143,8 +141,6 @@ export default {
           $.setCss({ display: 'none' }, fabricCanvas[1]);
           data.captureState = true;
         }, 10);
-
-        commit('setCanvas', {'canvas': data.fabricCanvas})
       },
       downloadImage: () => {
         const imageCanvas = document.querySelector('.camera__canvas--image')
@@ -158,7 +154,6 @@ export default {
         });
       },
       sendUserInfo: () => {
-        console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom());
         const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
         const fabricStickers = data.fabricCanvas.getObjects();
         const zoom = data.fabricCanvas.getZoom();
@@ -173,7 +168,9 @@ export default {
               scaleX: sticker.scaleX,
               scaleY: sticker.scaleY,
               angle: sticker.angle,
+              isAnimate: sticker.isAnimate,
             }
+            // sticker 정보만 골라서 넣어주기
             if (info.id !== undefined) {
               data.stickersInfo.push(info);
             }
@@ -186,103 +183,6 @@ export default {
         data.facingMode = !data.facingMode;
         methods.playVideo();
       },
-      addAnimation: () => {
-        fabric.Sprite = fabric.util.createClass(fabric.Image, {
-          type: 'sprite',
-          spriteWidth: 50,
-          spriteHeight: 72,
-          spriteIndex: 0,
-          frameTime: 100,
-
-          initialize: function(element, options) {
-            options || (options = { });
-
-            options.width = this.spriteWidth;
-            options.height = this.spriteHeight;
-
-            this.callSuper('initialize', element, options);
-
-            this.createTmpCanvas();
-            this.createSpriteImages();
-          },
-
-          createTmpCanvas: function() {
-            this.tmpCanvasEl = fabric.util.createCanvasElement();
-            this.tmpCanvasEl.width = this.spriteWidth || this.width;
-            this.tmpCanvasEl.height = this.spriteHeight || this.height;
-          },
-
-          createSpriteImages: function() {
-            this.spriteImages = [ ];
-
-            var steps = this._element.width / this.spriteWidth;
-            for (var i = 0; i < steps; i++) {
-              this.createSpriteImage(i);
-            }
-          },
-
-          createSpriteImage: function(i) {
-            var tmpCtx = this.tmpCanvasEl.getContext('2d');
-            tmpCtx.clearRect(0, 0, this.tmpCanvasEl.width, this.tmpCanvasEl.height);
-            tmpCtx.drawImage(this._element, -i * this.spriteWidth, 0);
-
-            var dataURL = this.tmpCanvasEl.toDataURL('image/png');
-            var tmpImg = fabric.util.createImage();
-
-            tmpImg.src = dataURL;
-
-            this.spriteImages.push(tmpImg);
-          },
-
-          _render: function(ctx) {
-            ctx.drawImage(
-              this.spriteImages[this.spriteIndex],
-              -this.width / 2,
-              -this.height / 2
-            );
-          },
-
-          play: function() {
-            var _this = this;
-            this.animInterval = setInterval(function() {
-
-              _this.onPlay && _this.onPlay();
-              _this.dirty = true;
-              _this.spriteIndex++;
-              if (_this.spriteIndex === _this.spriteImages.length) {
-                _this.spriteIndex = 0;
-              }
-            }, this.frameTime);
-          },
-
-          stop: function() {
-            clearInterval(this.animInterval);
-          }
-        });
-
-        fabric.Sprite.fromURL = function(url, callback, imgOptions) {
-          fabric.util.loadImage(url, function(img) {
-            callback(new fabric.Sprite(img, imgOptions));
-          });
-        };
-
-        fabric.Sprite.async = true;
-
-        //////////////////////////////////////////////////////////////
-
-        fabric.Sprite.fromURL(require('@/assets/sprite.png'), function(sprite) {
-          data.fabricCanvas.add(sprite);
-            sprite.set('dirty', true);
-            sprite.play();
-        });
-
-        (function render() {
-          data.fabricCanvas.renderAll();
-          fabric.util.requestAnimFrame(render);
-        })();
-
-
-      },
       activeStickerG: (e) => {
         _.go(
           $.qsa(".camera__group"),
@@ -293,9 +193,122 @@ export default {
         $.addClass("camera__group--active", $.closest(".camera__group", e.target));
       },
     }
+    const addAnimation = (id, isAnimate) => {
+      fabric.Sprite = fabric.util.createClass(fabric.Image, {
+        type: 'sprite',
+        spriteWidth: 50,
+        spriteHeight: 72,
+        spriteIndex: 0,
+        frameTime: 100,
 
-    const setfabricControl = () => {
-      // 스티커 컨드롤
+        initialize: function(element, options) {
+          options || (options = { });
+
+          options.width = this.spriteWidth;
+          options.height = this.spriteHeight;
+
+          this.callSuper('initialize', element, options);
+
+          this.createTmpCanvas();
+          this.createSpriteImages();
+        },
+
+        createTmpCanvas: function() {
+          this.tmpCanvasEl = fabric.util.createCanvasElement();
+          this.tmpCanvasEl.width = this.spriteWidth || this.width;
+          this.tmpCanvasEl.height = this.spriteHeight || this.height;
+        },
+
+        createSpriteImages: function() {
+          this.spriteImages = [ ];
+
+          var steps = this._element.width / this.spriteWidth;
+          for (var i = 0; i < steps; i++) {
+            this.createSpriteImage(i);
+          }
+        },
+
+        createSpriteImage: function(i) {
+          var tmpCtx = this.tmpCanvasEl.getContext('2d');
+          tmpCtx.clearRect(0, 0, this.tmpCanvasEl.width, this.tmpCanvasEl.height);
+          tmpCtx.drawImage(this._element, -i * this.spriteWidth, 0);
+
+          var dataURL = this.tmpCanvasEl.toDataURL('image/png');
+          var tmpImg = fabric.util.createImage();
+
+          tmpImg.src = dataURL;
+
+          this.spriteImages.push(tmpImg);
+        },
+
+        _render: function(ctx) {
+          ctx.drawImage(
+            this.spriteImages[this.spriteIndex],
+            -this.width / 2,
+            -this.height / 2
+          );
+        },
+
+        play: function() {
+          var _this = this;
+          this.animInterval = setInterval(function() {
+            _this.onPlay && _this.onPlay();
+            _this.dirty = true;
+            _this.spriteIndex++;
+            if (_this.spriteIndex === _this.spriteImages.length) {
+              _this.spriteIndex = 0;
+            }
+          }, this.frameTime);
+        },
+
+        stop: function() {
+          clearInterval(this.animInterval);
+        }
+      });
+
+      fabric.Sprite.fromURL = function(url, callback, imgOptions) {
+        fabric.util.loadImage(url, function(img) {
+          callback(new fabric.Sprite(img, imgOptions));
+        });
+      };
+
+      fabric.Sprite.async = true;
+
+      //////////////////////////////////////////////////////////////
+
+      fabric.Sprite.fromURL(require(`@/assets/stickers/sticker-${id}.png`), function(sprite) {
+        sprite['stickerId'] = id;
+        sprite['isAnimate'] = isAnimate;
+        data.fabricCanvas.add(sprite);
+          sprite.set('dirty', true);
+          sprite.play();
+      });
+
+      (function render() {
+        data.fabricCanvas.renderAll();
+        fabric.util.requestAnimFrame(render);
+      })();
+    }
+
+    const checkCamera = () => {
+      // 디바이스에 전/후 카메라 체크 -> switch 버튼 노출 유무
+      navigator.mediaDevices.enumerateDevices().then(deviceInfos => {
+        let video = [];
+        _.go(deviceInfos,
+          _.each(info => {
+            if (info.kind === 'videoinput') {
+              video.push(info)
+            }
+          })
+        )
+        data.cameraLength = video.length;
+      }).catch(error => {
+        console.log("error", error);
+      });
+    }
+
+    const setFabricControl = () => {
+      // 스티커 컨트롤 디자인 변경
       const fabricObject = fabric.Object.prototype;
       const img = document.createElement('img');
       // const deleteIcon = "data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'%3E%3Csvg version='1.1' id='Ebene_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='595.275px' height='595.275px' viewBox='200 215 230 470' xml:space='preserve'%3E%3Ccircle style='fill:%23F44336;' cx='299.76' cy='439.067' r='218.516'/%3E%3Cg%3E%3Crect x='267.162' y='307.978' transform='matrix(0.7071 -0.7071 0.7071 0.7071 -222.6202 340.6915)' style='fill:white;' width='65.545' height='262.18'/%3E%3Crect x='266.988' y='308.153' transform='matrix(0.7071 0.7071 -0.7071 0.7071 398.3889 -83.3116)' style='fill:white;' width='65.544' height='262.179'/%3E%3C/g%3E%3C/svg%3E";
@@ -320,16 +333,20 @@ export default {
         render: renderIcon,
         cornerSize: 24
       });
-      console.log("fabricObject.controls", fabricObject);
-      console.log("fabricObject.controls", fabricObject.controls);
-      console.log("img", img);
 
       function deleteObject(eventData, transform) {
         data.deleteState = true;
-        // console.log("transform", transform);
         const target = transform.target;
         const canvas = target.canvas;
-        canvas.remove(target);
+        console.log("transform", transform);
+        console.log("target", target);
+        if (target._objects) {
+          // 스티커 그룹으로 삭제하는 경우
+          _.go(target._objects,
+            _.each(item => canvas.remove(item))
+          )
+          data.fabricCanvas.discardActiveObject();
+        } else canvas.remove(target);
         canvas.requestRenderAll();
       }
 
@@ -347,25 +364,32 @@ export default {
 
     const setCanvasSize = () => {
       const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
-      const imageCanvas = document.querySelector('.camera__canvas--image') // 사용자 device에 저장
-      const videoCanvas = document.querySelector('.camera__canvas--video') // 사용자 비디오 캡쳐
+      if (!data.captureState) {
+        const imageCanvas = document.querySelector('.camera__canvas--image') // 사용자 device에 저장
+        const videoCanvas = document.querySelector('.camera__canvas--video') // 사용자 비디오 캡쳐
+        
+        imageCanvas.setAttribute("width", canvasW);
+        imageCanvas.setAttribute("height", canvasW);
+        videoCanvas.setAttribute("width", canvasW);
+        videoCanvas.setAttribute("height", canvasW);
+      }
       
-      imageCanvas.setAttribute("width", canvasW);
-      imageCanvas.setAttribute("height", canvasW);
-      videoCanvas.setAttribute("width", canvasW);
-      videoCanvas.setAttribute("height", canvasW);
-      resizeCallback();
-    }
-    const resizeCallback = () => { // resize
-      methods.playVideo();
-      console.log("data.fabricCanvas.getZoom()", data.fabricCanvas.getZoom());
-      const canvasW = document.querySelector(".camera__video-wrap").offsetWidth;
       const scale = canvasW / data.fabricCanvas.getWidth();
-      const zoom  = data.fabricCanvas.getZoom() * scale;
+      const zoom = data.fabricCanvas.getZoom() * scale;
       data.fabricCanvas.setDimensions({width: canvasW, height: canvasW});
       data.fabricCanvas.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     }
+
+    const resizeCallback = () => {
+      setCanvasSize();
+    }
+
+    // const resizeXCallback = () => {
+    //   console.log("resizeXCallback ---------- width");
+    //   // if (data.videoState) methods.playVideo();
+    // }
     const setZindex = () => {
+      // 마지막 edit 스티커 상위로
       data.fabricCanvas.on('mouse:up', function(e) {
         if (!e.target) return;
         if (data.deleteState) return data.deleteState = false;
@@ -373,44 +397,20 @@ export default {
       })
     }
 
-      // function gotDevices(deviceInfos) {
-      //   // Handles being called several times to update labels. Preserve values.
-      //   const values = selectors.map(select => select.value);
-      //   selectors.forEach(select => {
-      //     while (select.firstChild) {
-      //       select.removeChild(select.firstChild);
-      //     }
-      //   });
-      //   for (let i = 0; i !== deviceInfos.length; ++i) {
-      //     const deviceInfo = deviceInfos[i];
-      //     const option = document.createElement('option');
-      //     option.value = deviceInfo.deviceId;
-      //     if (deviceInfo.kind === 'audioinput') {
-      //       option.text = deviceInfo.label || `microphone ${audioInputSelect.length + 1}`;
-      //       audioInputSelect.appendChild(option);
-      //     } else if (deviceInfo.kind === 'audiooutput') {
-      //       option.text = deviceInfo.label || `speaker ${audioOutputSelect.length + 1}`;
-      //       audioOutputSelect.appendChild(option);
-      //     } else if (deviceInfo.kind === 'videoinput') {
-      //       option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
-      //       videoSelect.appendChild(option);
-      //     } else {
-      //       console.log('Some other kind of source/device: ', deviceInfo);
-      //     }
-      //   }
-      //   selectors.forEach((select, selectorIndex) => {
-      //     if (Array.prototype.slice.call(select.childNodes).some(n => n.value === values[selectorIndex])) {
-      //       select.value = values[selectorIndex];
-      //     }
-      //   });
-      // }
-
     onMounted(() => {
       methods.playVideo(); // 테스트 중에만
       setZindex();
       setCanvasSize();
-      setfabricControl();
-      
+      setFabricControl();
+
+      // 스티커 그룹 선택 해제
+      // data.fabricCanvas.on('selection:created', (e) => {
+      //   if(e.target.type === 'activeSelection') {
+      //     data.fabricCanvas.discardActiveObject();
+      //   } else {
+      //     //do nothing
+      //   }
+      // })
       window.addEventListener("resize", resizeCallback);
     })
 
@@ -425,5 +425,4 @@ export default {
   }
 }
 </script>
-
-<style lang="scss" src="@/css/captureFabric.scss"></style>
+<style lang="scss" src="@/css/cameraTest.scss"></style>

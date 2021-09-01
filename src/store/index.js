@@ -19,26 +19,6 @@ export const store = createStore({
           scaleY: null, 
           angle: null,
         },
-        {
-          id: '0-0',
-          width: null, 
-          height: null, 
-          left: null, 
-          top: null, 
-          scaleX: null, 
-          scaleY: null, 
-          angle: null,
-        },
-        {
-          id: '0-0',
-          width: null, 
-          height: null, 
-          left: null, 
-          top: null, 
-          scaleX: null, 
-          scaleY: null, 
-          angle: null,
-        },
       ]
     },
     inputInfo: {
@@ -53,6 +33,7 @@ export const store = createStore({
     },
     setStickersInfo(state, payload) {
       state.userInfo.stickers = payload.stickersInfo;
+      state.userInfo.userImage = payload.userImage;
       console.log("state.userInfo------------", state.userInfo);
     },
     updateName(state, val) {
@@ -69,7 +50,7 @@ export const store = createStore({
   },
   actions: {
     async init({ commit }, payload) {
-      const stickers = await import('../test/stickers.js');
+      const stickers = await import('./data-stickers.js');
       // console.log("stickers ------store", stickers.default);
       commit('init', {'stickers': stickers.default.stickers});
     },
