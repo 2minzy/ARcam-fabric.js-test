@@ -7,7 +7,7 @@
     <!-- <CaptureTest></CaptureTest> -->
     <!-- <CaptureFabricTest></CaptureFabricTest> -->
     <CaptureFabric></CaptureFabric>
-    <h1>Homeeeeee</h1>
+    <h1>This is a test page</h1>
   </div>
 </template>
 

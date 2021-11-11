@@ -21,7 +21,7 @@ module.exports = {
       title: 'Home',
     },
     signature: {
-      entry: 'src/main.js',
+      entry: 'src/signature.js',
       template: 'public/signature.html',
       filename: 'signature.html',
     },
