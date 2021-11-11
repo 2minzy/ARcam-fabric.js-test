@@ -22,7 +22,7 @@ module.exports = {
     },
     signature: {
       entry: 'src/main.js',
-      template: 'public/signature,html',
+      template: 'public/signature.html',
       filename: 'signature.html',
     },
     ...genPage([
