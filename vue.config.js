@@ -20,6 +20,11 @@ module.exports = {
       filename: 'index.html',
       title: 'Home',
     },
+    signature: {
+      entry: 'src/main.js',
+      template: 'public/signature,html',
+      filename: 'signature.html',
+    },
     ...genPage([
 			"captureFabric",
 			"captureFabricTest",
