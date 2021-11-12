@@ -23,7 +23,7 @@ module.exports = {
     signature: {
       entry: 'src/signature.js',
       template: 'public/signature.html',
-      filename: 'signature.html',
+      filename: 'utils/D.signature.html',
     },
     ...genPage([
 			"captureFabric",
